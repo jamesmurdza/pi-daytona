@@ -72,19 +72,31 @@ further backstop.
 | `write` | `sandbox.fs.uploadFile` |
 | `edit` | download → apply edits → upload (preserves Pi's exact-match semantics) |
 | `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
-| `find` | `sandbox.fs.searchFiles` |
-| `grep` | ripgrep/grep run **inside** the sandbox (Pi's grep runs `rg` locally, so it can't be redirected via operations) |
+| `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching, so it can't express Pi's path globs |
+| `grep` | `rg`/`grep` run **inside** the sandbox — Pi's grep runs `rg` locally and only uses operations for context lines, so it can't be redirected via operations |
 
 ## Development
 
 ```bash
 npm install
-npm run check      # typecheck + load/registration smoke test
+npm run check      # typecheck + load/registration smoke test (no key/network)
+npm run test:live  # full end-to-end against real Daytona (needs DAYTONA_API_KEY)
 ```
 
-`npm run smoke` loads the extension via Pi's own jiti loader against a stub API
+`npm run check` loads the extension via Pi's own jiti loader against a stub API
 and asserts it registers all flags, tools, events, and commands — no Daytona
 key or network required.
+
+`npm run test:live` drives the real extension against real Daytona:
+
+- **connectivity** — create / exec / delete a sandbox.
+- **integration** — the full v1 journey: create + clone, every tool
+  (bash/read/write/edit/ls/find/grep), the system-prompt cwd rewrite,
+  `/sandbox status` + `url`, live preview-URL reachability, and ephemeral
+  teardown (verified deleted).
+- **variants** — `--blank`, `--public` (tokenless preview), mid-session
+  sandbox death (tools must error, never silently run on the host), and the
+  missing-API-key path. Each run cleans up its own sandboxes.
 
 ## Status
 

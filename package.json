@@ -18,7 +18,11 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "smoke": "node scripts/smoke.mjs",
-    "check": "npm run typecheck && npm run smoke"
+    "check": "npm run typecheck && npm run smoke",
+    "test:connectivity": "node scripts/connectivity.mjs",
+    "test:integration": "node scripts/integration.mjs",
+    "test:variants": "node scripts/variants.mjs",
+    "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants"
   },
   "dependencies": {
     "@daytona/sdk": "^0.182.0"

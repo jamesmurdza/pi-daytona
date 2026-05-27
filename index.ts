@@ -20,11 +20,11 @@ import {
 	createWriteTool,
 } from "@earendil-works/pi-coding-agent";
 import { resolveApiKey } from "./src/auth.ts";
+import { type FindParams, runRemoteFind } from "./src/find-tool.ts";
 import { type GrepParams, runRemoteGrep } from "./src/grep-tool.ts";
 import {
 	createBashOps,
 	createEditOps,
-	createFindOps,
 	createLsOps,
 	createReadOps,
 	createWriteOps,
@@ -115,19 +115,19 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	// find and grep can't be redirected via operations: Pi runs fd/ripgrep
+	// locally, and Daytona's searchFiles only does basename matching. So we run
+	// the search inside the sandbox via dedicated tools.
 	pi.registerTool({
 		...localFind,
 		async execute(id, params, signal, onUpdate) {
 			if (active) {
-				const tool = createFindTool(active.cwd, { operations: createFindOps(active.sandbox) });
-				return tool.execute(id, params, signal, onUpdate);
+				return runRemoteFind(active.sandbox, active.cwd, params as FindParams);
 			}
 			return localFind.execute(id, params, signal, onUpdate);
 		},
 	});
 
-	// grep can't be redirected via operations (Pi runs ripgrep locally and only
-	// uses ops for context lines), so we run the search inside the sandbox.
 	pi.registerTool({
 		...localGrep,
 		async execute(id, params, signal, onUpdate) {
