@@ -1,0 +1,30 @@
+{
+  "name": "pi-daytona",
+  "version": "0.1.0",
+  "description": "Run the Pi coding agent's tools inside a remote, ephemeral Daytona sandbox.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "daytona",
+    "sandbox"
+  ],
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "smoke": "node scripts/smoke.mjs",
+    "check": "npm run typecheck && npm run smoke"
+  },
+  "dependencies": {
+    "@daytona/sdk": "^0.182.0"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.76.0",
+    "typescript": "^5.6.0"
+  }
+}
