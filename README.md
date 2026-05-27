@@ -15,9 +15,9 @@ tool operations to a Daytona sandbox, modeled on the in-tree `ssh.ts` example.
 ## Install
 
 ```bash
-pi install npm:pi-daytona
-# or, straight from source:
-pi install git:github.com/<you>/pi-daytona
+pi install git:github.com/jamesmurdza/pi-daytona
+# pin to a tag/commit/branch:
+pi install git:github.com/jamesmurdza/pi-daytona@v1
 # dev loop (no install):
 pi -e ./index.ts --daytona --blank
 ```

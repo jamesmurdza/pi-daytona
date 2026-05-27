@@ -155,7 +155,7 @@ Key constraint: Pi-owned packages (`@earendil-works/pi-coding-agent`, `pi-ai`, `
 **How users install it.**
 ```bash
 pi install npm:pi-daytona@1.0.0              # from npm
-pi install git:github.com/<you>/pi-daytona@v1 # straight from the repo (tag/commit pinned)
+pi install git:github.com/jamesmurdza/pi-daytona@v1 # straight from the repo (tag/commit pinned)
 pi install ./pi-daytona                       # local path
 pi -e ./pi-daytona/index.ts                   # load directly, no install (dev loop)
 ```
