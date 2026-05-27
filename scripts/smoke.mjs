@@ -21,11 +21,12 @@ const jiti = createJiti(import.meta.url);
 const flags = [];
 const tools = [];
 const events = [];
+const commands = [];
 
 const stubPi = {
 	registerFlag: (name) => flags.push(name),
 	registerTool: (tool) => tools.push(tool?.name),
-	registerCommand: (name) => events.push(`command:${name}`),
+	registerCommand: (name) => commands.push(name),
 	on: (event) => events.push(event),
 	getFlag: () => undefined,
 };
@@ -40,8 +41,9 @@ if (typeof factory !== "function") {
 factory(stubPi);
 
 const expectedFlags = ["daytona", "repo", "branch", "blank", "snapshot", "public"];
-const expectedTools = ["bash", "read", "write", "edit", "ls", "find"];
+const expectedTools = ["bash", "read", "write", "edit", "ls", "find", "grep"];
 const expectedEvents = ["user_bash", "session_start", "before_agent_start", "session_shutdown"];
+const expectedCommands = ["sandbox"];
 
 function assertContains(label, actual, expected) {
 	const missing = expected.filter((e) => !actual.includes(e));
@@ -54,5 +56,6 @@ function assertContains(label, actual, expected) {
 assertContains("flags", flags, expectedFlags);
 assertContains("tools", tools, expectedTools);
 assertContains("events", events, expectedEvents);
+assertContains("commands", commands, expectedCommands);
 
 console.log("\nSmoke test passed: extension loads and registers cleanly.");

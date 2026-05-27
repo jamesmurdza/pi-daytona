@@ -14,11 +14,13 @@ import {
 	createBashTool,
 	createEditTool,
 	createFindTool,
+	createGrepTool,
 	createLsTool,
 	createReadTool,
 	createWriteTool,
 } from "@earendil-works/pi-coding-agent";
 import { resolveApiKey } from "./src/auth.ts";
+import { type GrepParams, runRemoteGrep } from "./src/grep-tool.ts";
 import {
 	createBashOps,
 	createEditOps,
@@ -51,6 +53,7 @@ export default function (pi: ExtensionAPI) {
 	const localEdit = createEditTool(localCwd);
 	const localLs = createLsTool(localCwd);
 	const localFind = createFindTool(localCwd);
+	const localGrep = createGrepTool(localCwd);
 
 	// Resolved lazily on session_start (CLI flags are not available at load time).
 	let active: ActiveSandbox | null = null;
@@ -123,10 +126,79 @@ export default function (pi: ExtensionAPI) {
 		},
 	});
 
+	// grep can't be redirected via operations (Pi runs ripgrep locally and only
+	// uses ops for context lines), so we run the search inside the sandbox.
+	pi.registerTool({
+		...localGrep,
+		async execute(id, params, signal, onUpdate) {
+			if (active) {
+				return runRemoteGrep(active.sandbox, active.cwd, params as GrepParams);
+			}
+			return localGrep.execute(id, params, signal, onUpdate);
+		},
+	});
+
 	// Route user `!` bash commands to the sandbox too.
 	pi.on("user_bash", () => {
 		if (!active) return;
 		return { operations: createBashOps(active.sandbox) };
+	});
+
+	// --- Informational commands (read-only; don't change the backend) ---
+
+	pi.registerCommand("sandbox", {
+		description: "Inspect the active Daytona sandbox: status | url <port>",
+		getArgumentCompletions: (prefix) => {
+			const subs = ["status", "url"];
+			const matches = subs.filter((s) => s.startsWith(prefix.trim()));
+			return matches.length > 0 ? matches.map((s) => ({ value: s, label: s })) : null;
+		},
+		handler: async (args, ctx) => {
+			if (!active) {
+				ctx.ui.notify("No Daytona sandbox is active. Launch Pi with --daytona.", "warning");
+				return;
+			}
+			const [sub, ...rest] = args.trim().split(/\s+/).filter(Boolean);
+			const { sandbox, cwd } = active;
+
+			if (sub === "url") {
+				const port = Number(rest[0]);
+				if (!Number.isInteger(port) || port <= 0) {
+					ctx.ui.notify("Usage: /sandbox url <port>", "warning");
+					return;
+				}
+				try {
+					const link = await sandbox.getPreviewLink(port);
+					if (sandbox.public) {
+						ctx.ui.notify(`Preview (port ${port}): ${link.url}`, "info");
+					} else {
+						ctx.ui.notify(
+							`Preview (port ${port}): ${link.url}\n` +
+								`Private sandbox — include header:\n` +
+								`  curl -H "x-daytona-preview-token: ${link.token}" ${link.url}`,
+							"info",
+						);
+					}
+				} catch (err) {
+					ctx.ui.notify(`Failed to get preview URL: ${errorMessage(err)}`, "error");
+				}
+				return;
+			}
+
+			// Default subcommand: status.
+			try {
+				await sandbox.refreshData();
+			} catch {
+				// Show last-known data if the refresh call fails.
+			}
+			const state = sandbox.state ?? "unknown";
+			const visibility = sandbox.public ? "public" : "private";
+			const snapshot = sandbox.snapshot ? ` · ${sandbox.snapshot}` : "";
+			ctx.ui.notify(
+				`☁ ${shortId(sandbox.id)} · ${state} · ${cwd}${snapshot} · ${visibility}`,
+				"info",
+			);
+		},
 	});
 
 	// --- Lifecycle ---
