@@ -198,7 +198,7 @@ The reason the `*Operations` swap is low-risk is that every Pi tool op has a nea
 | `ReadOperations` (read file) | `sandbox.fs.downloadFile(remotePath)` → `Buffer` | Decode to string. `downloadFileStream` exists for large files. |
 | `WriteOperations` (write file) | `sandbox.fs.uploadFile(buffer, remotePath)` | Also `uploadFiles([...])` for batch; `createFolder(path, mode)` for dirs. |
 | `EditOperations` (edit file) | `sandbox.fs.replaceInFiles([path], pattern, newValue)` — or download→patch→upload for exact-match edits | `replaceInFiles` does batch text replacement; Pi's exact-string edit semantics may favor download+modify+upload to preserve uniqueness checks. |
-| `GrepOperations` (search contents) | `sandbox.fs.findFiles(path, pattern)` | "find text patterns **within** files" — the content search. |
+| `GrepOperations` (search contents) | **custom tool** — run `rg`/`grep` (or `sandbox.fs.findFiles`) **inside** the sandbox | ⚠️ Verified during implementation: Pi's grep tool always spawns ripgrep **locally** and only uses `GrepOperations` (`isDirectory` + `readFile`) for context lines — it does **not** delegate the search. So grep can't be redirected via ops injection; it needs a dedicated tool whose `execute` runs the search in the sandbox. |
 | `FindOperations` (find by name) | `sandbox.fs.searchFiles(path, pattern)` | "search **by filename** with glob support." (Note the SDK's naming is the inverse of intuition: `findFiles` = grep, `searchFiles` = find.) |
 | `LsOperations` (list dir) | `sandbox.fs.listFiles(path)` → `FileInfo[]`; `getFileDetails(path)` for stat | — |
 | clone repo at startup | `sandbox.git.clone(url, path, branch?, commitId?, username?, password?)` | Plus `status`/`pull`/`push`/`commit`/`branches` for future git tooling. |
