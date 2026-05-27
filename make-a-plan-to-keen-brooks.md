@@ -150,7 +150,7 @@ pi-daytona/
 ```
 Key constraint: Pi-owned packages (`@earendil-works/pi-coding-agent`, `pi-ai`, `pi-tui`, `typebox`) are **provided by the host at runtime**, so they go in `devDependencies` for typing and must not be bundled. Our own runtime deps (the Daytona SDK) belong in `dependencies`.
 
-> **SDK package name (verified):** the current Daytona docs install snippets use **`@daytona/sdk`**. An identical build is also published under the legacy scope **`@daytonaio/sdk`** at the same version (both `0.182.0` at time of writing). We standardize on `@daytona/sdk` to match the docs; `@daytonaio/sdk` is a drop-in alias. The package ships dual ESM/CJS and is documented to run under **Node.js and Bun** with no extra config — which satisfies both Pi runtimes (Node ≥ 22.19.0 via jiti, and the Bun-compiled binary), assuming the SDK pulls in no native addons.
+> **SDK package name (verified):** the correct, current package is **`@daytona/sdk`** — this is what the Daytona docs use throughout. The older **`@daytonaio/sdk`** scope (which this plan's earlier draft referenced) is outdated and should not be used. The package ships dual ESM/CJS and is documented to run under **Node.js and Bun** with no extra config — which satisfies both Pi runtimes (Node ≥ 22.19.0 via jiti, and the Bun-compiled binary), assuming the SDK pulls in no native addons.
 
 **How users install it.**
 ```bash
