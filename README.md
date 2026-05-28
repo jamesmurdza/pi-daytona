@@ -4,19 +4,19 @@
 
 ## Quick start
 
-1. **Install pi**
+1. Install pi
    ```bash
    npm install -g @earendil-works/pi-coding-agent
    ```
    See <https://pi.dev> for other install options.
 
-2. **Install the plugin**
+2. Install the plugin
    ```bash
    pi install git:github.com/jamesmurdza/pi-daytona
    ```
    > ⚠️ To update later, run `pi update` — `pi install` won't refresh an existing install.
 
-3. **Launch**
+3. Launch
    ```bash
    DAYTONA_API_KEY=dtn_... pi --daytona
    ```
