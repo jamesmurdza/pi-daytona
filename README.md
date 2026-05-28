@@ -1,6 +1,6 @@
 # pi-daytona
 
-*Run the [Pi](https://pi.dev) coding agent's tools inside a remote, ephemeral [Daytona](https://www.daytona.io) sandbox — so installs, builds, and destructive commands never touch your laptop.*
+*[Pi](https://pi.dev) coding agent extension for integration with [Daytona](https://www.daytona.io) sandboxes. The agent runs locally while all tool-calls run inside a sandbox.*
 
 ## Quick start
 
