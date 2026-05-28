@@ -21,13 +21,14 @@ import type {
 	ReadOperations,
 	WriteOperations,
 } from "@earendil-works/pi-coding-agent";
+import { execCommand, withRecovery } from "./sandbox.ts";
 import { shellQuote } from "./util.ts";
 
 const IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
 
 /** Run a command in the sandbox and return its combined stdout and exit code. */
 async function run(sandbox: Sandbox, command: string): Promise<{ stdout: string; exitCode: number }> {
-	const res = await sandbox.process.executeCommand(command);
+	const res = await execCommand(sandbox, command);
 	const stdout = res.result ?? res.artifacts?.stdout ?? "";
 	return { stdout, exitCode: res.exitCode ?? 0 };
 }
@@ -67,7 +68,7 @@ export function createBashOps(sandbox: Sandbox): BashOperations {
 			if (signal?.aborted) throw new Error("aborted");
 			// We deliberately do not forward the host `env` into the sandbox: the
 			// container has its own environment, and leaking host vars is unsafe.
-			const res = await sandbox.process.executeCommand(backgroundSafe(command), cwd, undefined, timeout);
+			const res = await execCommand(sandbox, backgroundSafe(command), cwd, timeout);
 			const output = res.result ?? res.artifacts?.stdout ?? "";
 			if (output) onData(Buffer.from(output));
 			return { exitCode: res.exitCode ?? null };
@@ -77,7 +78,7 @@ export function createBashOps(sandbox: Sandbox): BashOperations {
 
 export function createReadOps(sandbox: Sandbox): ReadOperations {
 	return {
-		readFile: (path) => sandbox.fs.downloadFile(path),
+		readFile: (path) => withRecovery(sandbox, () => sandbox.fs.downloadFile(path)),
 		access: async (path) => {
 			const { exitCode } = await run(sandbox, `test -r ${shellQuote(path)}`);
 			if (exitCode !== 0) throw new Error(`File not readable: ${path}`);
@@ -96,7 +97,7 @@ export function createReadOps(sandbox: Sandbox): ReadOperations {
 
 export function createWriteOps(sandbox: Sandbox): WriteOperations {
 	return {
-		writeFile: (path, content) => sandbox.fs.uploadFile(Buffer.from(content, "utf8"), path),
+		writeFile: (path, content) => withRecovery(sandbox, () => sandbox.fs.uploadFile(Buffer.from(content, "utf8"), path)),
 		// `mkdir -p` is idempotent; fs.createFolder errors if the folder exists.
 		mkdir: async (dir) => {
 			await run(sandbox, `mkdir -p ${shellQuote(dir)}`);
@@ -109,8 +110,8 @@ export function createEditOps(sandbox: Sandbox): EditOperations {
 	// in-process, then writes it back — preserving its uniqueness checks.
 	// This is the download -> modify -> upload strategy.
 	return {
-		readFile: (path) => sandbox.fs.downloadFile(path),
-		writeFile: (path, content) => sandbox.fs.uploadFile(Buffer.from(content, "utf8"), path),
+		readFile: (path) => withRecovery(sandbox, () => sandbox.fs.downloadFile(path)),
+		writeFile: (path, content) => withRecovery(sandbox, () => sandbox.fs.uploadFile(Buffer.from(content, "utf8"), path)),
 		access: async (path) => {
 			const { exitCode } = await run(sandbox, `test -r ${shellQuote(path)} && test -w ${shellQuote(path)}`);
 			if (exitCode !== 0) throw new Error(`File not readable/writable: ${path}`);

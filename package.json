@@ -23,8 +23,9 @@
     "test:integration": "node scripts/integration.mjs",
     "test:variants": "node scripts/variants.mjs",
     "test:bash-bg": "node scripts/bash-bg.mjs",
+    "test:recovery": "node scripts/recovery.mjs",
     "test:e2e": "node node_modules/@earendil-works/pi-coding-agent/dist/cli.js -e ./index.ts -e ./scripts/e2e-fake-provider.ts -ne --provider fake --model test --api-key dummy-key --daytona --blank --no-session -p 'run pwd'",
-    "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants && npm run test:bash-bg"
+    "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants && npm run test:bash-bg && npm run test:recovery"
   },
   "dependencies": {
     "@daytona/sdk": "^0.182.0"

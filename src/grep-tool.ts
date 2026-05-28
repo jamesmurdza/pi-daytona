@@ -11,6 +11,7 @@
  */
 
 import type { Sandbox } from "@daytona/sdk";
+import { execCommand } from "./sandbox.ts";
 import { shellQuote } from "./util.ts";
 
 /** Mirrors Pi's grepSchema. */
@@ -59,7 +60,7 @@ export async function runRemoteGrep(
 		`if command -v rg >/dev/null 2>&1; then ${rg.join(" ")}; ` +
 		`else ${gp.join(" ")}; fi | head -n ${max}`;
 
-	const res = await sandbox.process.executeCommand(command, cwd);
+	const res = await execCommand(sandbox, command, cwd);
 	const text = (res.result ?? res.artifacts?.stdout ?? "").replace(/\s+$/, "");
 	const body = text.length > 0 ? text : `No matches found for /${pattern}/ in ${searchDir}`;
 	return { content: [{ type: "text", text: body }], details: undefined };

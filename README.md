@@ -58,10 +58,19 @@ While sandboxed, a footer badge shows the live status:
 
 ## Lifecycle
 
-The sandbox is **ephemeral**: created at launch, torn down on exit
-(`sandbox.delete()`), and created with `ephemeral: true` so it is reaped if Pi
-exits uncleanly. Daytona's own `autoStopInterval` (default 15 min idle) is a
-further backstop.
+The sandbox is scoped to your session: created at launch and **deleted on exit**
+(`sandbox.delete()`).
+
+While the session is open, an idle sandbox is **paused (stopped), not destroyed**
+(`autoStopInterval: 30` min) — its filesystem is preserved, so stepping away
+doesn't lose your work. The next tool call transparently **restarts** it (see
+`src/sandbox.ts`), so you won't notice beyond a brief delay. If the sandbox is
+ever genuinely gone (removed, or reaped long after stopping), tool calls fail
+with a clear message telling you to restart — they are **never** silently run on
+your host.
+
+Backstops for a crashed/abandoned session: `autoDeleteInterval: 1440` (delete
+after ~24h continuously stopped) and Daytona's 7-day auto-archive.
 
 ## What runs where
 
@@ -111,6 +120,10 @@ key or network required.
 - **variants** — `--blank`, `--public` (tokenless preview), mid-session
   sandbox death (tools must error, never silently run on the host), and the
   missing-API-key path. Each run cleans up its own sandboxes.
+- **bash-bg** — backgrounded processes (`server &`) return immediately and keep
+  serving, while foreground commands still block.
+- **recovery** — an idle/stopped sandbox auto-restarts on the next tool call; a
+  deleted one yields a clear error instead of a raw Docker message.
 
 `npm run test:e2e` is a true end-to-end run through the **real `pi` CLI** (no
 paid LLM): it loads a scripted fake provider (`scripts/e2e-fake-provider.ts`)

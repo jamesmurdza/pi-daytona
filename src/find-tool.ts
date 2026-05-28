@@ -14,6 +14,7 @@
  */
 
 import type { Sandbox } from "@daytona/sdk";
+import { execCommand } from "./sandbox.ts";
 import { joinPath, shellQuote } from "./util.ts";
 
 /** Mirrors Pi's findSchema. */
@@ -76,7 +77,7 @@ export async function runRemoteFind(
 	].join(" ");
 
 	const command = `if command -v rg >/dev/null 2>&1; then ${rg}; else ${find}; fi | head -n ${max}`;
-	const res = await sandbox.process.executeCommand(command, searchPath);
+	const res = await execCommand(sandbox, command, searchPath);
 	const lines = (res.result ?? res.artifacts?.stdout ?? "")
 		.split("\n")
 		.map((l) => l.replace(/^\.\//, "").trim())

@@ -29,6 +29,7 @@ import {
 	createReadOps,
 	createWriteOps,
 } from "./src/ops.ts";
+import { withRecovery } from "./src/sandbox.ts";
 import { joinPath, normalizeRepoUrl, repoName, shortId } from "./src/util.ts";
 
 /** State for the sandbox bound to the current session. */
@@ -168,7 +169,7 @@ export default function (pi: ExtensionAPI) {
 					return;
 				}
 				try {
-					const link = await sandbox.getPreviewLink(port);
+					const link = await withRecovery(sandbox, () => sandbox.getPreviewLink(port));
 					if (sandbox.public) {
 						ctx.ui.notify(`Preview (port ${port}): ${link.url}`, "info");
 					} else {
@@ -224,7 +225,12 @@ export default function (pi: ExtensionAPI) {
 			const sandbox = await daytona.create({
 				snapshot,
 				public: isPublic,
-				ephemeral: true, // autoDeleteInterval = 0: reaped as soon as it stops
+				// Idle PAUSES the sandbox (its filesystem is preserved) rather than
+				// destroying it, so stepping away doesn't lose your work — the next
+				// tool call transparently restarts it (see withRecovery). We still
+				// delete on quit; autoDeleteInterval is a leak backstop for crashes.
+				autoStopInterval: 30, // minutes idle -> stop
+				autoDeleteInterval: 1440, // delete only after ~24h continuously stopped
 				labels: { "created-by": "pi-daytona" },
 			});
 
@@ -262,7 +268,7 @@ export default function (pi: ExtensionAPI) {
 		return { systemPrompt };
 	});
 
-	// Tear down the ephemeral sandbox on exit.
+	// Tear down the sandbox on exit (it's ephemeral to the session).
 	pi.on("session_shutdown", async (event, ctx) => {
 		if (!active) return;
 		if (event.reason !== "quit" && event.reason !== "reload") return;
@@ -272,7 +278,7 @@ export default function (pi: ExtensionAPI) {
 		try {
 			await sandbox.delete();
 		} catch {
-			// Best-effort: ephemeral + autoStop guarantees the sandbox is reaped anyway.
+			// Best-effort: autoStop + autoDelete reap it later if this didn't run.
 		}
 	});
 }
