@@ -93,8 +93,7 @@ Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` 
 - **Crash backstop**: `autoDeleteInterval: 1440` (delete ~24h after stopping) and Daytona's 7-day auto-archive.
 - If the sandbox is ever genuinely gone, tool calls fail with a clear message telling you to restart — they are **never** silently run on your host.
 
-<details>
-<summary>Tool → Daytona mapping</summary>
+### Tool → Daytona mapping
 
 | Pi tool | Backed by |
 |---|---|
@@ -105,8 +104,6 @@ Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` 
 | `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
 | `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching |
 | `grep` | `rg` / `grep` run **inside** the sandbox — Pi's grep runs `rg` locally and uses ops only for context lines |
-
-</details>
 
 ## Development
 
