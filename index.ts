@@ -19,6 +19,7 @@ import {
 	createReadTool,
 	createWriteTool,
 } from "@earendil-works/pi-coding-agent";
+import { Type } from "typebox";
 import { resolveApiKey } from "./src/auth.ts";
 import { type FindParams, runRemoteFind } from "./src/find-tool.ts";
 import { type GrepParams, runRemoteGrep } from "./src/grep-tool.ts";
@@ -136,6 +137,34 @@ export default function (pi: ExtensionAPI) {
 				return runRemoteGrep(active.sandbox, active.cwd, params as GrepParams);
 			}
 			return localGrep.execute(id, params, signal, onUpdate);
+		},
+	});
+
+	// Custom tool: let the agent fetch a port's preview URL itself, so after it
+	// starts a server (e.g. `npm run dev &`) it can hand the user a clickable
+	// link without them running /sandbox url.
+	pi.registerTool({
+		name: "preview_url",
+		label: "Preview URL",
+		description:
+			"Get the public preview URL for a port served inside the Daytona sandbox. " +
+			"Use this after starting a server (e.g. a dev server on port 3000) to give the user a link.",
+		promptSnippet: "Get a browser-openable preview URL for a port served in the sandbox",
+		parameters: Type.Object({
+			port: Type.Number({ description: "The port the server listens on inside the sandbox" }),
+		}),
+		async execute(_id, { port }) {
+			if (!active) {
+				return { content: [{ type: "text", text: "No active Daytona sandbox." }], details: undefined };
+			}
+			const { sandbox } = active;
+			const link = await withRecovery(sandbox, () => sandbox.getPreviewLink(port));
+			const text = sandbox.public
+				? `Preview URL for port ${port}: ${link.url}`
+				: `Preview URL for port ${port}: ${link.url}\n` +
+					`This is a private sandbox, so the URL needs an auth header:\n` +
+					`  curl -H "x-daytona-preview-token: ${link.token}" ${link.url}`;
+			return { content: [{ type: "text", text }], details: undefined };
 		},
 	});
 

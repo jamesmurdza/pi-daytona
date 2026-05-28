@@ -56,6 +56,12 @@ While sandboxed, a footer badge shows the live status:
 - `/sandbox url <port>` — preview URL for a served port (with the
   `x-daytona-preview-token` for private sandboxes)
 
+### Tools the agent can call
+
+- `preview_url(port)` — returns the public preview URL for a port served in the
+  sandbox, so after the agent starts a server (e.g. `npm run dev &`) it can hand
+  you a clickable link itself, without you running `/sandbox url`.
+
 ## Lifecycle
 
 The sandbox is scoped to your session: created at launch and **deleted on exit**

@@ -200,6 +200,21 @@ async function main() {
 		}
 	}
 
+	// 10b. preview_url custom tool (LLM-callable) returns the same URL
+	console.log("10b. preview_url tool");
+	const pv = getText(await exec("preview_url", { port }));
+	const toolUrl = pv.match(/(https:\/\/\d+-\S+)/)?.[1];
+	check(!!toolUrl && /^https:\/\/\d+-/.test(toolUrl), "preview_url tool returns a URL", pv.split("\n")[0]);
+	if (toolUrl) {
+		const tok = pv.match(/x-daytona-preview-token: ([^"\s]+)/)?.[1];
+		try {
+			const resp = await fetch(toolUrl, { headers: tok ? { "x-daytona-preview-token": tok } : {} });
+			check(resp.ok, `preview_url tool URL reachable (HTTP ${resp.status})`);
+		} catch (e) {
+			bad("preview_url tool URL fetch", e?.message ?? String(e));
+		}
+	}
+
 	// 11. teardown
 	console.log("11. session_shutdown (teardown)");
 	const daytona = new Daytona();
