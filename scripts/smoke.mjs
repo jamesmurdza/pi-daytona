@@ -41,7 +41,7 @@ if (typeof factory !== "function") {
 factory(stubPi);
 
 const expectedFlags = ["daytona", "repo", "branch", "blank", "snapshot", "public"];
-const expectedTools = ["bash", "read", "write", "edit", "ls", "find", "grep"];
+const expectedTools = ["bash", "read", "write", "edit", "ls", "find", "grep", "preview_url"];
 const expectedEvents = ["user_bash", "session_start", "before_agent_start", "session_shutdown"];
 const expectedCommands = ["sandbox"];
 

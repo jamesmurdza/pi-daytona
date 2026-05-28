@@ -1,17 +1,18 @@
 /**
- * Test-only fake model provider for a real end-to-end run (no paid LLM).
+ * Test-only provider for a real end-to-end run of the preview_url custom tool.
  *
- * Turn 1: emit a real `bash` tool call (`pwd && echo PI_DAYTONA_E2E_MARKER`).
- * Pi's actual agent loop executes it via the pi-daytona bash tool (→ Daytona
- * sandbox), then calls us again.
- * Turn 2: dump the conversation (incl. the tool result) to a host file for
- * inspection, then emit a final text message and stop.
+ * Turn 1: bash -> background a web server.
+ * Turn 2: call the `preview_url` tool for that port (Pi dispatches it to the
+ *         pi-daytona extension, which hits real Daytona getPreviewLink).
+ * Turn 3: dump the conversation (incl. the preview_url tool result) to a host
+ *         file, then emit a final message and stop.
  */
 
 import { createAssistantMessageEventStream } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { writeFileSync } from "node:fs";
 
+const PORT = 8055;
 const ZERO_USAGE = {
 	input: 0,
 	output: 0,
@@ -26,7 +27,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerProvider("fake", {
 		name: "Fake",
-		baseUrl: "https://fake.invalid", // unused: streamSimple handles everything
+		baseUrl: "https://fake.invalid",
 		apiKey: "dummy-key",
 		api: "anthropic-messages",
 		models: [
@@ -51,20 +52,24 @@ export default function (pi: ExtensionAPI) {
 				usage: ZERO_USAGE,
 				timestamp: Date.now(),
 			};
-
-			if (turn === 1) {
-				const command = process.env.E2E_CMD ?? "pwd && echo PI_DAYTONA_E2E_MARKER";
-				const toolCall = { type: "toolCall" as const, id: "call_1", name: "bash", arguments: { command } };
+			const toolTurn = (id: string, name: string, args: Record<string, any>) => {
+				const toolCall = { type: "toolCall" as const, id, name, arguments: args };
 				const message = { ...base, content: [toolCall], stopReason: "toolUse" as const };
 				stream.push({ type: "start", partial: message });
 				stream.push({ type: "toolcall_start", contentIndex: 0, partial: message });
 				stream.push({ type: "toolcall_end", contentIndex: 0, toolCall, partial: message });
 				stream.push({ type: "done", reason: "toolUse", message });
+			};
+
+			if (turn === 1) {
+				toolTurn("c1", "bash", { command: `python3 -m http.server ${PORT} &` });
+			} else if (turn === 2) {
+				toolTurn("c2", "preview_url", { port: PORT });
 			} else {
 				try {
-					writeFileSync("/tmp/logs/e2e-context.json", JSON.stringify(context, null, 2));
+					writeFileSync("/tmp/logs/e2e-preview.json", JSON.stringify(context, null, 2));
 				} catch (e) {
-					writeFileSync("/tmp/logs/e2e-context.json", `capture failed: ${String(e)}`);
+					writeFileSync("/tmp/logs/e2e-preview.json", `capture failed: ${String(e)}`);
 				}
 				const text = { type: "text" as const, text: "Done." };
 				const message = { ...base, content: [text], stopReason: "stop" as const };
