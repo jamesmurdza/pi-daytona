@@ -2,8 +2,6 @@
 
 *Run the [Pi](https://pi.dev) coding agent's tools inside a remote, ephemeral [Daytona](https://www.daytona.io) sandbox — so installs, builds, and destructive commands never touch your laptop.*
 
-> 🆕 Idle now **pauses** the sandbox (filesystem preserved; auto-resumes on the next tool call). `python3 -m http.server &` no longer hangs. New tool: `preview_url(port)`.
-
 ## Quick start
 
 1. **Install pi**
@@ -31,15 +29,6 @@
 
 ## Usage
 
-A typical turn — the agent backgrounds a server, then hands you the link itself:
-
-```
-you ▸ start the dev server
-pi  ▸ npm run dev &              (returns in 0.3s; the server keeps running)
-    ▸ preview_url(3000)
-    ▸ https://3000-7f3a9b21.daytonaproxy01.net   ← click
-```
-
 ### Common recipes
 
 **Work on an existing repo**
@@ -57,8 +46,7 @@ pi --daytona --blank
 pi --daytona --repo … --public
 ```
 
-<details>
-<summary>All flags</summary>
+### All flags
 
 | Flag | Description |
 |---|---|
@@ -73,8 +61,6 @@ Environment:
 - `DAYTONA_API_KEY` *(required)* — or you'll be prompted once per session.
 - `DAYTONA_API_URL` — defaults to `https://app.daytona.io/api`.
 - `DAYTONA_TARGET` — e.g. `us`.
-
-</details>
 
 ### While you're in a session
 
