@@ -66,7 +66,6 @@ const statuses = [];
 const flagValues = {
 	daytona: true,
 	repo: "https://github.com/octocat/Hello-World",
-	blank: false,
 	branch: undefined,
 	snapshot: undefined,
 	public: false,

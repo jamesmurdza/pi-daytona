@@ -36,7 +36,7 @@ import { joinPath, normalizeRepoUrl, repoName, shortId } from "./src/util.ts";
 /** State for the sandbox bound to the current session. */
 interface ActiveSandbox {
 	sandbox: Sandbox;
-	/** Working directory inside the sandbox (repo root, or home for blank). */
+	/** Working directory inside the sandbox (repo root, or home when no --repo). */
 	cwd: string;
 }
 
@@ -44,7 +44,6 @@ export default function (pi: ExtensionAPI) {
 	pi.registerFlag("daytona", { description: "Run tools inside a Daytona sandbox", type: "boolean" });
 	pi.registerFlag("repo", { description: "Git repo to clone into the sandbox", type: "string" });
 	pi.registerFlag("branch", { description: "Branch to clone (with --repo)", type: "string" });
-	pi.registerFlag("blank", { description: "Start a blank sandbox (no repo)", type: "boolean" });
 	pi.registerFlag("snapshot", { description: "Daytona snapshot/base image to use", type: "string" });
 	pi.registerFlag("public", { description: "Create a public sandbox (preview URLs need no token)", type: "boolean" });
 
@@ -267,8 +266,7 @@ export default function (pi: ExtensionAPI) {
 			let cwd = home;
 
 			const repo = stringFlag(pi.getFlag("repo"));
-			const blank = pi.getFlag("blank") === true;
-			if (repo && !blank) {
+			if (repo) {
 				const url = normalizeRepoUrl(repo);
 				cwd = joinPath(home, repoName(repo));
 				const branch = stringFlag(pi.getFlag("branch"));
