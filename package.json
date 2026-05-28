@@ -22,7 +22,8 @@
     "test:connectivity": "node scripts/connectivity.mjs",
     "test:integration": "node scripts/integration.mjs",
     "test:variants": "node scripts/variants.mjs",
-    "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants"
+    "test:bash-bg": "node scripts/bash-bg.mjs",
+    "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants && npm run test:bash-bg"
   },
   "dependencies": {
     "@daytona/sdk": "^0.182.0"
