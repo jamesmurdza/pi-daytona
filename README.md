@@ -26,17 +26,17 @@
 
 ### CLI
 
-**Work on an existing repo**
-```bash
-pi --daytona --repo github.com/acme/api --branch dev
-```
-
-**Start from scratch**
+Start from scratch:
 ```bash
 pi --daytona
 ```
 
-**Public preview (browser-openable URLs, no token)**
+Work on an existing repo:
+```bash
+pi --daytona --repo github.com/acme/api --branch dev
+```
+
+Public preview (browser-openable URLs, no token):
 ```bash
 pi --daytona --repo … --public
 ```
