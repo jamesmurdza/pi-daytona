@@ -87,21 +87,16 @@ Daytona's `executeCommand` resolves only when the command's output reaches EOF, 
 
 ### Tools
 
-The standard Pi tools are backed by Daytona under the hood:
-
-| Pi tool | Backed by |
+| Tool | What it does |
 |---|---|
-| `bash` (+ user `!`) | `sandbox.process.executeCommand` (wrapped for background safety) |
-| `read` | `sandbox.fs.downloadFile` |
-| `write` | `sandbox.fs.uploadFile` |
-| `edit` | download → apply edits → upload (preserves Pi's exact-match semantics) |
-| `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
-| `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching |
-| `grep` | `rg` / `grep` run **inside** the sandbox — Pi's grep runs `rg` locally and uses ops only for context lines |
-
-Plus an extra LLM-callable tool:
-
-- `preview_url(port)` — the primary way to get a preview link. The agent calls this itself after starting a server, then hands you a clickable URL. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
+| `bash` (+ user `!`) | Run a command in the sandbox; backgrounded processes (`&`) don't hang the agent |
+| `read` | Read a file from the sandbox |
+| `write` | Write a file to the sandbox |
+| `edit` | Edit a file (download → modify → upload; preserves Pi's exact-match semantics) |
+| `ls` | List a sandbox directory |
+| `find` | Find files by glob inside the sandbox (gitignore-aware, supports path globs) |
+| `grep` | Search file contents inside the sandbox |
+| `preview_url(port)` | Get a public preview URL for a port — the agent calls this itself after starting a server (returns the `x-daytona-preview-token` curl hint for private sandboxes) |
 
 ## Development
 
