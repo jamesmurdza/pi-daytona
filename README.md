@@ -112,6 +112,12 @@ key or network required.
   sandbox death (tools must error, never silently run on the host), and the
   missing-API-key path. Each run cleans up its own sandboxes.
 
+`npm run test:e2e` is a true end-to-end run through the **real `pi` CLI** (no
+paid LLM): it loads a scripted fake provider (`scripts/e2e-fake-provider.ts`)
+that drives a real `bash` tool call through Pi's actual agent loop into the
+Daytona sandbox, proving the whole path — real flag parsing, extension loading,
+`session_start`, system-prompt cwd rewrite, tool dispatch, and teardown.
+
 ## Status
 
 v1 is launch-scoped and ephemeral. Deferred: mirror-local-dir + sync-back,

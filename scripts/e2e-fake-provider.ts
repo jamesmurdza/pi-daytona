@@ -26,6 +26,7 @@ export default function (pi: ExtensionAPI) {
 
 	pi.registerProvider("fake", {
 		name: "Fake",
+		baseUrl: "https://fake.invalid", // unused: streamSimple handles everything
 		apiKey: "dummy-key",
 		api: "anthropic-messages",
 		models: [

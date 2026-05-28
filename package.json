@@ -23,6 +23,7 @@
     "test:integration": "node scripts/integration.mjs",
     "test:variants": "node scripts/variants.mjs",
     "test:bash-bg": "node scripts/bash-bg.mjs",
+    "test:e2e": "node node_modules/@earendil-works/pi-coding-agent/dist/cli.js -e ./index.ts -e ./scripts/e2e-fake-provider.ts -ne --provider fake --model test --api-key dummy-key --daytona --blank --no-session -p 'run pwd'",
     "test:live": "npm run test:connectivity && npm run test:integration && npm run test:variants && npm run test:bash-bg"
   },
   "dependencies": {
