@@ -22,14 +22,9 @@
    ```
    Get a key at <https://app.daytona.io>.
 
-4. **Verify** — you should see the cloud badge in the footer:
-   ```
-   ☁ daytona · 7f3a9b21 · running · /home/daytona
-   ```
-
 ## Usage
 
-### Common recipes
+### CLI
 
 **Work on an existing repo**
 ```bash
@@ -46,7 +41,7 @@ pi --daytona --blank
 pi --daytona --repo … --public
 ```
 
-### All flags
+#### All flags
 
 | Flag | Description |
 |---|---|
@@ -62,16 +57,18 @@ Environment:
 - `DAYTONA_API_URL` — defaults to `https://app.daytona.io/api`.
 - `DAYTONA_TARGET` — e.g. `us`.
 
-### While you're in a session
+### Interactive sessions
 
-**Slash commands (you type):**
+Once pi is running with `--daytona`, the cloud badge in the footer is the always-visible signal that work is remote:
+
+```
+☁ daytona · 7f3a9b21 · running · /home/daytona
+```
+
+Slash commands you can type:
+
 - `/sandbox status` — id, state, working dir, snapshot, visibility
 - `/sandbox url <port>` — manual fallback for getting a preview URL
-
-**Tools the agent calls:**
-- `preview_url(port)` — the primary way to get a preview link; the agent calls this itself after starting a server. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
-
-> 💡 A command left in the **foreground** (no `&`) that never exits will block the turn, exactly like in a normal shell — background it or pass a `timeout`.
 
 ## How it works
 
@@ -80,6 +77,14 @@ The agent's brain (LLM, TUI, sessions) stays on your machine. Pi's tool layer is
 ### Backgrounding
 
 Daytona's `executeCommand` resolves only when the command's output reaches EOF, so a backgrounded process (`server &`) would normally hold the pipe open and hang the agent. We wrap every bash command in a subshell whose combined output is redirected to a temp file, so backgrounded processes detach cleanly and the call returns as soon as the **foreground** finishes.
+
+> 💡 A command left in the **foreground** (no `&`) that never exits will still block the turn, exactly like in a normal shell — background it or pass a `timeout`.
+
+### Tools the agent calls
+
+Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` overrides, pi-daytona registers extra LLM-callable tools:
+
+- `preview_url(port)` — the primary way to get a preview link. The agent calls this itself after starting a server, then hands you a clickable URL. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
 
 ### Lifecycle
 
