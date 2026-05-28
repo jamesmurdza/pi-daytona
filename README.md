@@ -33,7 +33,7 @@ pi --daytona --repo github.com/acme/api --branch dev
 
 **Start from scratch**
 ```bash
-pi --daytona --blank
+pi --daytona
 ```
 
 **Public preview (browser-openable URLs, no token)**
@@ -48,7 +48,7 @@ pi --daytona --repo … --public
 | `--daytona` | Run tools inside a Daytona sandbox |
 | `--repo <url>` | Git repo to clone into the sandbox (server-side) |
 | `--branch <name>` | Branch to clone (used with `--repo`) |
-| `--blank` | Start with a blank sandbox (no repo) |
+| `--blank` | Force a blank sandbox even when `--repo` is set (blank is already the default without `--repo`) |
 | `--snapshot <name>` | Choose a Daytona snapshot / base image |
 | `--public` | Create a public sandbox so preview URLs need no token |
 
