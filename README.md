@@ -79,12 +79,6 @@ Daytona's `executeCommand` resolves only when the command's output reaches EOF, 
 
 > 💡 A command left in the **foreground** (no `&`) that never exits will still block the turn, exactly like in a normal shell — background it or pass a `timeout`.
 
-### Tools the agent calls
-
-Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` overrides, pi-daytona registers extra LLM-callable tools:
-
-- `preview_url(port)` — the primary way to get a preview link. The agent calls this itself after starting a server, then hands you a clickable URL. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
-
 ### Lifecycle
 
 - **Idle pauses** the sandbox (`autoStopInterval: 30` min). Its filesystem is preserved; the next tool call transparently restarts it.
@@ -92,7 +86,9 @@ Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` 
 - **Crash backstop**: `autoDeleteInterval: 1440` (delete ~24h after stopping) and Daytona's 7-day auto-archive.
 - If the sandbox is ever genuinely gone, tool calls fail with a clear message telling you to restart — they are **never** silently run on your host.
 
-### Tool → Daytona mapping
+### Tools
+
+The standard Pi tools are backed by Daytona under the hood:
 
 | Pi tool | Backed by |
 |---|---|
@@ -103,6 +99,10 @@ Beyond the standard `bash` / `read` / `write` / `edit` / `ls` / `find` / `grep` 
 | `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
 | `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching |
 | `grep` | `rg` / `grep` run **inside** the sandbox — Pi's grep runs `rg` locally and uses ops only for context lines |
+
+Plus an extra LLM-callable tool:
+
+- `preview_url(port)` — the primary way to get a preview link. The agent calls this itself after starting a server, then hands you a clickable URL. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
 
 ## Development
 
