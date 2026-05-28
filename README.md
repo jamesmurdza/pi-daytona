@@ -108,21 +108,9 @@ Plus an extra LLM-callable tool:
 
 ```bash
 npm install
-npm run check       # typecheck + jiti load smoke (no key/network)
-npm run test:live   # full end-to-end against real Daytona (needs DAYTONA_API_KEY)
+npm run check       # typecheck + load smoke (offline)
+npm run test:live   # end-to-end against real Daytona (needs DAYTONA_API_KEY)
 ```
-
-`npm run check` loads the extension via Pi's own jiti loader against a stub API and asserts it registers all flags, tools, events, and commands — no Daytona key or network required.
-
-`npm run test:live` drives the real extension against real Daytona:
-
-- **connectivity** — create / exec / delete a sandbox.
-- **integration** — the full v1 journey: create + clone, every tool, system-prompt cwd rewrite, `/sandbox status` + `url`, `preview_url` tool, live preview-URL reachability, and verified teardown.
-- **variants** — `--public` (tokenless preview), mid-session sandbox death (tools must error, never silently run on the host), and the missing-key path.
-- **bash-bg** — backgrounded processes return immediately and keep serving.
-- **recovery** — an idle/stopped sandbox auto-restarts on the next tool call; a deleted one yields a clear error.
-
-`npm run test:e2e` / `npm run test:e2e-preview` are true end-to-end runs through the **real `pi` CLI** with a scripted fake provider — they drive real `bash` / `preview_url` tool calls through Pi's actual agent loop.
 
 ## Roadmap
 
