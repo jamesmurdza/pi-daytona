@@ -112,3 +112,9 @@ npm run test:live   # end-to-end against real Daytona (needs DAYTONA_API_KEY)
 - **`/sandbox shell`** — interactive PTY into the sandbox.
 - **`/sandbox sync <path>`** — one-shot local↔sandbox file copy.
 - **`/sandbox snapshot <name>`** — capture the current sandbox as a reusable snapshot.
+
+## Pi resources
+
+- [Homepage](https://pi.dev/)
+- [Usage docs](https://pi.dev/docs/latest/usage)
+- [GitHub](https://github.com/earendil-works/pi)
