@@ -108,10 +108,11 @@ npm run test:live   # end-to-end against real Daytona (needs DAYTONA_API_KEY)
 
 ## Roadmap
 
-- **Persist + resume sandbox** — quit pi, come back later, pick up where you left off.
-- **`/sandbox shell`** — interactive PTY into the sandbox.
-- **`/sandbox sync <path>`** — one-shot local↔sandbox file copy.
+- **Persist + resume sandbox** (`pi --daytona <id>`) — quit pi, come back later, pick up where you left off. Hooks exist (`pi.appendEntry` / `getEntries`, `session_start` `reason:"resume"`); reconnecting to possibly-stopped sandboxes is the real complexity.
+- **`/sandbox shell`** — interactive PTY into the sandbox (`sandbox.pty`); passthrough (raw mode, resize) is finicky.
+- **`/sandbox sync <path>`** — one-shot local↔sandbox file copy. The safe, explicit subset of full sync.
 - **`/sandbox snapshot <name>`** — capture the current sandbox as a reusable snapshot.
+- **Mirror local dir + sync-back** — bidirectional sync. Highest-risk piece: silent overwrites, conflict handling, ignore rules, large-file strategy.
 
 ## Pi resources
 
