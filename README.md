@@ -114,11 +114,7 @@ npm run test:live   # end-to-end against real Daytona (needs DAYTONA_API_KEY)
 
 ## Roadmap
 
-- **`serve(command, port)` tool** — background a command and return its preview URL in one call.
-- **Auto preview-URL detection** — surface URLs from bash output without an explicit tool call.
 - **Persist + resume sandbox** — quit pi, come back later, pick up where you left off.
 - **`/sandbox shell`** — interactive PTY into the sandbox.
 - **`/sandbox sync <path>`** — one-shot local↔sandbox file copy.
 - **`/sandbox snapshot <name>`** — capture the current sandbox as a reusable snapshot.
-- **Process-sessions registry** — named long-running processes with start / stop / logs.
-- **Sandboxed sub-agents** — each subagent in its own sandbox for parallel exploration.
