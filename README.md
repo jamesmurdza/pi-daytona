@@ -125,8 +125,43 @@ npm run test:live   # full end-to-end against real Daytona (needs DAYTONA_API_KE
 
 `npm run test:e2e` / `npm run test:e2e-preview` are true end-to-end runs through the **real `pi` CLI** with a scripted fake provider — they drive real `bash` / `preview_url` tool calls through Pi's actual agent loop.
 
-## Status & roadmap
+## Roadmap
 
-**Shipped:** clone/blank, all tools (bash/read/write/edit/ls/find/grep), `/sandbox status|url`, `preview_url`, public/private previews, idle pause + auto-recovery, ephemeral-on-quit, backgrounding fix.
+Concrete next features, grouped by theme.
 
-**Deferred:** persist/resume sandbox across pi sessions, `/sandbox shell`, `/sandbox sync` (local↔sandbox file copy), auto preview-URL detection, sandboxed sub-agents.
+### Agent UX
+
+- **`serve(command, port)` tool** — background a command and return its preview URL in one call (combines bash + `preview_url`).
+- **Auto preview-URL detection** — sniff bash output for *"listening on port N"* and surface URLs without an explicit tool call.
+- **Per-tool `☁` marker** — render a cloud icon on tool calls when they run in the sandbox.
+- **Disconnection status** — when a sandbox dies mid-session, update the footer to `☁ unavailable` instead of just throwing on the next call.
+
+### Session continuity
+
+- **Persist + resume sandbox id** — quit pi, come back later, keep your sandbox (filesystem, work, everything). Pairs naturally with the idle-pause lifecycle we already have.
+- **`pi --daytona <id>`** — attach to an existing sandbox at launch.
+- **Mid-session flip** — `/sandbox start | stop` to enable/disable the sandbox from a live session.
+
+### More tools and commands
+
+- **`/sandbox shell`** — interactive PTY into the sandbox (using `sandbox.pty`).
+- **`/sandbox sync <path>`** — explicit, one-shot local↔sandbox file copy (the deferred-because-risky bidirectional sync, but opt-in so it's safe).
+- **`/sandbox snapshot <name>`** — capture the current sandbox as a reusable snapshot so the next launch (or a teammate's) gets the same prebuilt env.
+- **`/sandbox logs`** — tail recent process output, especially useful paired with process sessions.
+- **`sandbox_info()` tool** — id, state, resources, uptime, cwd for the agent to reason about.
+- **`git_commit(message)` / `git_push()` tools** — let the agent persist its work via `sandbox.git`.
+
+### Process management
+
+- **Process-sessions registry** — adopt Daytona's `sandbox.process.createSession` for properly-tracked long-running processes (dev servers, watchers), with start / stop / logs by name. A more principled answer to backgrounding than the `&` wrapper.
+
+### Configuration
+
+- **`daytona` settings block** in `~/.pi/agent/settings.json` for defaults (`--daytona`, `--public`, `--snapshot`, resources).
+- **Resource flags** — `--cpu`, `--memory`, `--disk`, `--gpu` (image-based create).
+- **Network policy flags** — `--network-block-all`, `--network-allow=<cidr>`.
+- **First-run wizard** — if `DAYTONA_API_KEY` is missing, walk the user through getting one.
+
+### Bigger swings
+
+- **Sandboxed sub-agents** — each subagent gets its own sandbox for parallel exploration without stepping on the main session's filesystem.
