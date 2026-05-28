@@ -1,144 +1,144 @@
 # pi-daytona
 
-Run the [Pi](https://pi.dev) coding agent's tools inside a remote, ephemeral
-[Daytona](https://www.daytona.io) sandbox.
+*Run the [Pi](https://pi.dev) coding agent's tools inside a remote, ephemeral [Daytona](https://www.daytona.io) sandbox — so installs, builds, and destructive commands never touch your laptop.*
 
-> **The agent's brain runs locally; its hands run in a remote container.**
-> Pi, the LLM calls, the TUI, sessions, and settings stay on your machine.
-> Only **tool execution** (`bash` + file I/O) is redirected into a clean,
-> disposable Daytona container — so installs, builds, and destructive commands
-> never touch your laptop.
+> 🆕 Idle now **pauses** the sandbox (filesystem preserved; auto-resumes on the next tool call). `python3 -m http.server &` no longer hangs. New tool: `preview_url(port)`.
 
-This is a standalone Pi extension (no fork of Pi). It delegates Pi's pluggable
-tool operations to a Daytona sandbox, modeled on the in-tree `ssh.ts` example.
+## Quick start
 
-## Install
+1. **Install pi**
+   ```bash
+   npm install -g @earendil-works/pi-coding-agent
+   ```
+   See <https://pi.dev> for other install options.
 
-```bash
-pi install git:github.com/jamesmurdza/pi-daytona
-# pin to a tag/commit/branch:
-pi install git:github.com/jamesmurdza/pi-daytona@v1
-# dev loop (no install):
-pi -e ./index.ts --daytona --blank
-```
+2. **Install the plugin**
+   ```bash
+   pi install git:github.com/jamesmurdza/pi-daytona
+   ```
+   > ⚠️ **Re-installing later?** Use `pi update git:github.com/jamesmurdza/pi-daytona` — `pi install` is a no-op on an already-installed package and won't pull new code.
 
-## Auth
+3. **Launch**
+   ```bash
+   DAYTONA_API_KEY=dtn_... pi --daytona
+   ```
+   Get a key at <https://app.daytona.io>.
 
-Set a Daytona API key (create one at <https://app.daytona.io>):
-
-```bash
-export DAYTONA_API_KEY=dtn_...
-```
-
-The SDK also honors `DAYTONA_API_URL` (default `https://app.daytona.io/api`)
-and `DAYTONA_TARGET`. If `DAYTONA_API_KEY` is unset, the extension prompts for
-it once per session (held in memory only — never persisted).
+4. **Verify** — you should see the cloud badge in the footer:
+   ```
+   ☁ daytona · 7f3a9b21 · running · /home/daytona
+   ```
 
 ## Usage
 
+A typical turn — the agent backgrounds a server, then hands you the link itself:
+
+```
+you ▸ start the dev server
+pi  ▸ npm run dev &              (returns in 0.3s; the server keeps running)
+    ▸ preview_url(3000)
+    ▸ https://3000-7f3a9b21.daytonaproxy01.net   ← click
+```
+
+### Common recipes
+
+**Work on an existing repo**
 ```bash
-pi --daytona --repo github.com/acme/api          # clone a repo into a fresh sandbox
 pi --daytona --repo github.com/acme/api --branch dev
-pi --daytona --blank                              # empty default sandbox; agent sets it up
-pi --daytona --snapshot my-snapshot               # choose the base image/snapshot
-pi --daytona --repo ... --public                  # public sandbox (browser-openable preview URLs)
 ```
 
-While sandboxed, a footer badge shows the live status:
-
+**Start from scratch**
+```bash
+pi --daytona --blank
 ```
-☁ daytona · 7f3a9b21 · running · /home/daytona/api
+
+**Public preview (browser-openable URLs, no token)**
+```bash
+pi --daytona --repo … --public
 ```
 
-### Commands
+<details>
+<summary>All flags</summary>
 
+| Flag | Description |
+|---|---|
+| `--daytona` | Run tools inside a Daytona sandbox |
+| `--repo <url>` | Git repo to clone into the sandbox (server-side) |
+| `--branch <name>` | Branch to clone (used with `--repo`) |
+| `--blank` | Start with a blank sandbox (no repo) |
+| `--snapshot <name>` | Choose a Daytona snapshot / base image |
+| `--public` | Create a public sandbox so preview URLs need no token |
+
+Environment:
+- `DAYTONA_API_KEY` *(required)* — or you'll be prompted once per session.
+- `DAYTONA_API_URL` — defaults to `https://app.daytona.io/api`.
+- `DAYTONA_TARGET` — e.g. `us`.
+
+</details>
+
+### While you're in a session
+
+**Slash commands (you type):**
 - `/sandbox status` — id, state, working dir, snapshot, visibility
-- `/sandbox url <port>` — preview URL for a served port (with the
-  `x-daytona-preview-token` for private sandboxes)
+- `/sandbox url <port>` — manual fallback for getting a preview URL
 
-### Tools the agent can call
+**Tools the agent calls:**
+- `preview_url(port)` — the primary way to get a preview link; the agent calls this itself after starting a server. Returns the URL plus, on private sandboxes, the `x-daytona-preview-token` curl hint.
 
-- `preview_url(port)` — returns the public preview URL for a port served in the
-  sandbox, so after the agent starts a server (e.g. `npm run dev &`) it can hand
-  you a clickable link itself, without you running `/sandbox url`.
+> 💡 A command left in the **foreground** (no `&`) that never exits will block the turn, exactly like in a normal shell — background it or pass a `timeout`.
 
-## Lifecycle
+## How it works
 
-The sandbox is scoped to your session: created at launch and **deleted on exit**
-(`sandbox.delete()`).
+The agent's brain (LLM, TUI, sessions) stays on your machine. Pi's tool layer is pluggable, so `pi-daytona` substitutes Daytona-backed implementations of `bash` / `read` / `write` / `edit` / `ls`, plus dedicated in-sandbox tools for `find` / `grep`. A footer badge is the always-visible signal that work is remote.
 
-While the session is open, an idle sandbox is **paused (stopped), not destroyed**
-(`autoStopInterval: 30` min) — its filesystem is preserved, so stepping away
-doesn't lose your work. The next tool call transparently **restarts** it (see
-`src/sandbox.ts`), so you won't notice beyond a brief delay. If the sandbox is
-ever genuinely gone (removed, or reaped long after stopping), tool calls fail
-with a clear message telling you to restart — they are **never** silently run on
-your host.
+### Backgrounding
 
-Backstops for a crashed/abandoned session: `autoDeleteInterval: 1440` (delete
-after ~24h continuously stopped) and Daytona's 7-day auto-archive.
+Daytona's `executeCommand` resolves only when the command's output reaches EOF, so a backgrounded process (`server &`) would normally hold the pipe open and hang the agent. We wrap every bash command in a subshell whose combined output is redirected to a temp file, so backgrounded processes detach cleanly and the call returns as soon as the **foreground** finishes.
 
-## What runs where
+### Lifecycle
+
+- **Idle pauses** the sandbox (`autoStopInterval: 30` min). Its filesystem is preserved; the next tool call transparently restarts it.
+- **Deleted on quit** (`sandbox.delete()`).
+- **Crash backstop**: `autoDeleteInterval: 1440` (delete ~24h after stopping) and Daytona's 7-day auto-archive.
+- If the sandbox is ever genuinely gone, tool calls fail with a clear message telling you to restart — they are **never** silently run on your host.
+
+<details>
+<summary>Tool → Daytona mapping</summary>
 
 | Pi tool | Backed by |
 |---|---|
-| `bash` (+ user `!`) | `sandbox.process.executeCommand` (commands are wrapped so backgrounded processes like `python3 -m http.server 8080 &` return immediately instead of hanging — see below) |
+| `bash` (+ user `!`) | `sandbox.process.executeCommand` (wrapped for background safety) |
 | `read` | `sandbox.fs.downloadFile` |
 | `write` | `sandbox.fs.uploadFile` |
 | `edit` | download → apply edits → upload (preserves Pi's exact-match semantics) |
 | `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
-| `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching, so it can't express Pi's path globs |
-| `grep` | `rg`/`grep` run **inside** the sandbox — Pi's grep runs `rg` locally and only uses operations for context lines, so it can't be redirected via operations |
+| `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching |
+| `grep` | `rg` / `grep` run **inside** the sandbox — Pi's grep runs `rg` locally and uses ops only for context lines |
 
-## Backgrounding & long-running processes
-
-Daytona's `executeCommand` resolves only when the command's output reaches EOF,
-so a naively backgrounded process (`server &`) would hold the output pipe open
-and hang the agent. `pi-daytona` runs each command in a subshell whose combined
-output is redirected to a temp file, so backgrounded processes detach cleanly
-and the call returns as soon as the **foreground** command finishes — e.g.
-`python3 -m http.server 8080 &` returns immediately and keeps serving (reachable
-via `/sandbox url 8080`).
-
-A command left in the **foreground** (no `&`) that never exits will still block
-the turn, exactly as it would in a normal shell — background it or pass a
-`timeout`.
+</details>
 
 ## Development
 
 ```bash
 npm install
-npm run check      # typecheck + load/registration smoke test (no key/network)
-npm run test:live  # full end-to-end against real Daytona (needs DAYTONA_API_KEY)
+npm run check       # typecheck + jiti load smoke (no key/network)
+npm run test:live   # full end-to-end against real Daytona (needs DAYTONA_API_KEY)
 ```
 
-`npm run check` loads the extension via Pi's own jiti loader against a stub API
-and asserts it registers all flags, tools, events, and commands — no Daytona
-key or network required.
+`npm run check` loads the extension via Pi's own jiti loader against a stub API and asserts it registers all flags, tools, events, and commands — no Daytona key or network required.
 
 `npm run test:live` drives the real extension against real Daytona:
 
 - **connectivity** — create / exec / delete a sandbox.
-- **integration** — the full v1 journey: create + clone, every tool
-  (bash/read/write/edit/ls/find/grep), the system-prompt cwd rewrite,
-  `/sandbox status` + `url`, live preview-URL reachability, and ephemeral
-  teardown (verified deleted).
-- **variants** — `--blank`, `--public` (tokenless preview), mid-session
-  sandbox death (tools must error, never silently run on the host), and the
-  missing-API-key path. Each run cleans up its own sandboxes.
-- **bash-bg** — backgrounded processes (`server &`) return immediately and keep
-  serving, while foreground commands still block.
-- **recovery** — an idle/stopped sandbox auto-restarts on the next tool call; a
-  deleted one yields a clear error instead of a raw Docker message.
+- **integration** — the full v1 journey: create + clone, every tool, system-prompt cwd rewrite, `/sandbox status` + `url`, `preview_url` tool, live preview-URL reachability, and verified teardown.
+- **variants** — `--blank`, `--public` (tokenless preview), mid-session sandbox death (tools must error, never silently run on the host), and the missing-key path.
+- **bash-bg** — backgrounded processes return immediately and keep serving.
+- **recovery** — an idle/stopped sandbox auto-restarts on the next tool call; a deleted one yields a clear error.
 
-`npm run test:e2e` is a true end-to-end run through the **real `pi` CLI** (no
-paid LLM): it loads a scripted fake provider (`scripts/e2e-fake-provider.ts`)
-that drives a real `bash` tool call through Pi's actual agent loop into the
-Daytona sandbox, proving the whole path — real flag parsing, extension loading,
-`session_start`, system-prompt cwd rewrite, tool dispatch, and teardown.
+`npm run test:e2e` / `npm run test:e2e-preview` are true end-to-end runs through the **real `pi` CLI** with a scripted fake provider — they drive real `bash` / `preview_url` tool calls through Pi's actual agent loop.
 
-## Status
+## Status & roadmap
 
-v1 is launch-scoped and ephemeral. Deferred: mirror-local-dir + sync-back,
-persistence/reattach, mid-session backend flip, auto preview-URL detection,
-interactive `/sandbox shell`, and sandboxed subagents.
+**Shipped:** clone/blank, all tools (bash/read/write/edit/ls/find/grep), `/sandbox status|url`, `preview_url`, public/private previews, idle pause + auto-recovery, ephemeral-on-quit, backgrounding fix.
+
+**Deferred:** persist/resume sandbox across pi sessions, `/sandbox shell`, `/sandbox sync` (local↔sandbox file copy), auto preview-URL detection, sandboxed sub-agents.
