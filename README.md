@@ -24,7 +24,7 @@
 
 ## Usage
 
-### CLI
+### CLI flags
 
 Start from scratch:
 ```bash
@@ -41,8 +41,6 @@ Public preview (browser-openable URLs, no token):
 pi --daytona --repo … --public
 ```
 
-#### All flags
-
 | Flag | Description |
 |---|---|
 | `--daytona` | Run tools inside a Daytona sandbox |
@@ -51,7 +49,8 @@ pi --daytona --repo … --public
 | `--snapshot <name>` | Choose a Daytona snapshot / base image |
 | `--public` | Create a public sandbox so preview URLs need no token |
 
-Environment:
+### Environment variables
+
 - `DAYTONA_API_KEY` *(required)* — or you'll be prompted once per session.
 - `DAYTONA_API_URL` — defaults to `https://app.daytona.io/api`.
 - `DAYTONA_TARGET` — e.g. `us`.
