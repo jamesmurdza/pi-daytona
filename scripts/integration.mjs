@@ -150,17 +150,19 @@ async function main() {
 	const grepNone = getText(await exec("grep", { pattern: "zzz_no_such_token_zzz" }));
 	check(/No matches found/.test(grepNone), "grep reports no matches cleanly");
 
-	// 7. before_agent_start rewrites cwd
+	// 7. before_agent_start rewrites cwd — use a host path UNLIKE process.cwd()
+	// to prove the regex match doesn't depend on assuming Pi's prompt cwd.
 	console.log("7. before_agent_start cwd rewrite");
-	const fakePrompt = `You are an agent.\nCurrent working directory: ${process.cwd()}\nDo work.`;
+	const hostCwd = "/some/unrelated/host/path";
+	const fakePrompt = `You are an agent.\nCurrent date: 2026-05-28\nCurrent working directory: ${hostCwd}\nDo work.`;
 	const rewritten = await handlers.get("before_agent_start")(
 		{ type: "before_agent_start", systemPrompt: fakePrompt, prompt: "", systemPromptOptions: {} },
 		ctx,
 	);
 	check(
 		rewritten?.systemPrompt?.includes("/home/daytona/Hello-World") &&
-			!rewritten.systemPrompt.includes(`directory: ${process.cwd()}`),
-		"system prompt cwd rewritten to sandbox path",
+			!rewritten.systemPrompt.includes(hostCwd),
+		"system prompt cwd rewritten to sandbox path (independent of host cwd)",
 		rewritten?.systemPrompt?.split("\n").find((l) => l.includes("working directory")),
 	);
 

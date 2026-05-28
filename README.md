@@ -15,9 +15,9 @@ tool operations to a Daytona sandbox, modeled on the in-tree `ssh.ts` example.
 ## Install
 
 ```bash
-pi install npm:pi-daytona
-# or, straight from source:
-pi install git:github.com/<you>/pi-daytona
+pi install git:github.com/jamesmurdza/pi-daytona
+# pin to a tag/commit/branch:
+pi install git:github.com/jamesmurdza/pi-daytona@v1
 # dev loop (no install):
 pi -e ./index.ts --daytona --blank
 ```
@@ -67,13 +67,27 @@ further backstop.
 
 | Pi tool | Backed by |
 |---|---|
-| `bash` (+ user `!`) | `sandbox.process.executeCommand` |
+| `bash` (+ user `!`) | `sandbox.process.executeCommand` (commands are wrapped so backgrounded processes like `python3 -m http.server 8080 &` return immediately instead of hanging — see below) |
 | `read` | `sandbox.fs.downloadFile` |
 | `write` | `sandbox.fs.uploadFile` |
 | `edit` | download → apply edits → upload (preserves Pi's exact-match semantics) |
 | `ls` | `sandbox.fs` via shell (`test`, `ls -1A`) |
 | `find` | `rg --files -g <glob>` (POSIX `find` fallback) run **inside** the sandbox — Daytona's `searchFiles` only does basename matching, so it can't express Pi's path globs |
 | `grep` | `rg`/`grep` run **inside** the sandbox — Pi's grep runs `rg` locally and only uses operations for context lines, so it can't be redirected via operations |
+
+## Backgrounding & long-running processes
+
+Daytona's `executeCommand` resolves only when the command's output reaches EOF,
+so a naively backgrounded process (`server &`) would hold the output pipe open
+and hang the agent. `pi-daytona` runs each command in a subshell whose combined
+output is redirected to a temp file, so backgrounded processes detach cleanly
+and the call returns as soon as the **foreground** command finishes — e.g.
+`python3 -m http.server 8080 &` returns immediately and keeps serving (reachable
+via `/sandbox url 8080`).
+
+A command left in the **foreground** (no `&`) that never exits will still block
+the turn, exactly as it would in a normal shell — background it or pass a
+`timeout`.
 
 ## Development
 

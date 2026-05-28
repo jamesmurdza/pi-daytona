@@ -32,16 +32,42 @@ async function run(sandbox: Sandbox, command: string): Promise<{ stdout: string;
 	return { stdout, exitCode: res.exitCode ?? 0 };
 }
 
+/**
+ * Wrap a command so backgrounded processes can't hang the call.
+ *
+ * Daytona's `executeCommand` resolves only when the command's stdout/stderr
+ * reach EOF. A backgrounded process (`server &`) inherits those pipes and holds
+ * them open indefinitely, so the call never returns. We run the command in a
+ * subshell whose combined output is redirected to a temp file, then replay the
+ * file and re-raise the real exit code. Background descendants then write to the
+ * file (not the result pipe), so the call returns as soon as the FOREGROUND
+ * finishes — matching Pi's local "background and return" behavior. A subshell
+ * (not a brace group) keeps any `exit` inside the user command from skipping the
+ * replay. The newline before `)` correctly terminates a trailing `&`.
+ */
+function backgroundSafe(command: string): string {
+	return [
+		'__pi_out=$(mktemp 2>/dev/null || echo "/tmp/pi-daytona-$$.out")',
+		`( ${command}`,
+		') >"$__pi_out" 2>&1',
+		"__pi_rc=$?",
+		'cat "$__pi_out"',
+		'rm -f "$__pi_out"',
+		"exit $__pi_rc",
+	].join("\n");
+}
+
 export function createBashOps(sandbox: Sandbox): BashOperations {
 	return {
 		// Daytona's executeCommand is non-streaming, so we emit the whole output
-		// once when it resolves. Long-running processes (e.g. dev servers) are a
-		// separate concern handled via process sessions, not the bash tool.
+		// once when it resolves. We wrap the command (see backgroundSafe) so a
+		// backgrounded process like `python3 -m http.server 8080 &` returns
+		// immediately instead of hanging on the inherited output pipe.
 		exec: async (command, cwd, { onData, signal, timeout }) => {
 			if (signal?.aborted) throw new Error("aborted");
 			// We deliberately do not forward the host `env` into the sandbox: the
 			// container has its own environment, and leaking host vars is unsafe.
-			const res = await sandbox.process.executeCommand(command, cwd, undefined, timeout);
+			const res = await sandbox.process.executeCommand(backgroundSafe(command), cwd, undefined, timeout);
 			const output = res.result ?? res.artifacts?.stdout ?? "";
 			if (output) onData(Buffer.from(output));
 			return { exitCode: res.exitCode ?? null };
