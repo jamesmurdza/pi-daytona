@@ -1,6 +1,6 @@
 /**
  * Live tests for alternate launch modes and the safety property.
- *   A. --blank           : no clone, cwd = home
+ *   A. no --repo         : no clone, cwd = home
  *   B. --public          : preview URL reachable WITHOUT a token
  *   C. mid-session death : tools error out; they must NOT run on the host
  *   D. auth missing      : graceful notice, stays local, no crash
@@ -80,21 +80,20 @@ function makeHarness(flagValues) {
 	return { tools, commands, handlers, notifications, ctx, exec };
 }
 
-async function variantBlank() {
-	console.log("A. --blank (no clone)");
-	const h = makeHarness({ daytona: true, blank: true, repo: "https://github.com/octocat/Hello-World" });
+async function variantNoRepo() {
+	console.log("A. no --repo (default: blank sandbox, cwd = home)");
+	const h = makeHarness({ daytona: true });
 	await h.handlers.get("session_start")({ type: "session_start", reason: "startup" }, h.ctx);
 	const ready = h.notifications.find((n) => /Sandbox ready/.test(n.message));
-	check(!!ready, "blank sandbox ready", h.notifications.find((n) => n.type === "error")?.message);
+	check(!!ready, "sandbox ready", h.notifications.find((n) => n.type === "error")?.message);
 	const pwd = getText(await h.exec("bash", { command: "pwd" })).trim();
 	check(pwd === "/home/daytona", "cwd is home, not a repo dir", pwd);
-	check(!/Hello-World/.test(pwd), "repo was NOT cloned in blank mode");
 	await h.handlers.get("session_shutdown")({ type: "session_shutdown", reason: "quit" }, h.ctx);
 }
 
 async function variantPublic() {
 	console.log("B. --public (tokenless preview)");
-	const h = makeHarness({ daytona: true, blank: true, public: true });
+	const h = makeHarness({ daytona: true, public: true });
 	await h.handlers.get("session_start")({ type: "session_start", reason: "startup" }, h.ctx);
 	check(!!h.notifications.find((n) => /Sandbox ready/.test(n.message)), "public sandbox ready");
 	const port = 8090;
@@ -119,7 +118,7 @@ async function variantPublic() {
 async function variantDeath() {
 	console.log("C. mid-session sandbox death (must not run on host)");
 	const before = created.length;
-	const h = makeHarness({ daytona: true, blank: true });
+	const h = makeHarness({ daytona: true });
 	await h.handlers.get("session_start")({ type: "session_start", reason: "startup" }, h.ctx);
 	// The captured object is the real sandbox the extension is using.
 	const victim = created[before];
@@ -144,7 +143,7 @@ async function variantAuthMissing() {
 	const saved = process.env.DAYTONA_API_KEY;
 	delete process.env.DAYTONA_API_KEY;
 	try {
-		const h = makeHarness({ daytona: true, blank: true });
+		const h = makeHarness({ daytona: true });
 		await h.handlers.get("session_start")({ type: "session_start", reason: "startup" }, h.ctx);
 		check(!!h.notifications.find((n) => n.type === "error" && /API key/i.test(n.message)), "shows a clear no-key error");
 		// With no sandbox active, bash falls back to local execution (normal Pi behavior).
@@ -165,7 +164,7 @@ async function cleanup() {
 	} catch {}
 }
 
-await variantBlank();
+await variantNoRepo();
 await variantPublic();
 await variantDeath();
 await variantAuthMissing();
