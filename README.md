@@ -48,7 +48,6 @@ pi --daytona --repo … --public
 | `--daytona` | Run tools inside a Daytona sandbox |
 | `--repo <url>` | Git repo to clone into the sandbox (server-side) |
 | `--branch <name>` | Branch to clone (used with `--repo`) |
-| `--blank` | Force a blank sandbox even when `--repo` is set (blank is already the default without `--repo`) |
 | `--snapshot <name>` | Choose a Daytona snapshot / base image |
 | `--public` | Create a public sandbox so preview URLs need no token |
 
@@ -119,7 +118,7 @@ npm run test:live   # full end-to-end against real Daytona (needs DAYTONA_API_KE
 
 - **connectivity** — create / exec / delete a sandbox.
 - **integration** — the full v1 journey: create + clone, every tool, system-prompt cwd rewrite, `/sandbox status` + `url`, `preview_url` tool, live preview-URL reachability, and verified teardown.
-- **variants** — `--blank`, `--public` (tokenless preview), mid-session sandbox death (tools must error, never silently run on the host), and the missing-key path.
+- **variants** — `--public` (tokenless preview), mid-session sandbox death (tools must error, never silently run on the host), and the missing-key path.
 - **bash-bg** — backgrounded processes return immediately and keep serving.
 - **recovery** — an idle/stopped sandbox auto-restarts on the next tool call; a deleted one yields a clear error.
 
