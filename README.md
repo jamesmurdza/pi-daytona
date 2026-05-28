@@ -14,7 +14,7 @@
    ```bash
    pi install git:github.com/jamesmurdza/pi-daytona
    ```
-   > ⚠️ **Re-installing later?** Use `pi update git:github.com/jamesmurdza/pi-daytona` — `pi install` is a no-op on an already-installed package and won't pull new code.
+   > ⚠️ To update later, run `pi update` — `pi install` won't refresh an existing install.
 
 3. **Launch**
    ```bash
