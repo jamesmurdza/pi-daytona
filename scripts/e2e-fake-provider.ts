@@ -53,7 +53,8 @@ export default function (pi: ExtensionAPI) {
 			};
 
 			if (turn === 1) {
-				const toolCall = { type: "toolCall" as const, id: "call_1", name: "bash", arguments: { command: "pwd && echo PI_DAYTONA_E2E_MARKER" } };
+				const command = process.env.E2E_CMD ?? "pwd && echo PI_DAYTONA_E2E_MARKER";
+				const toolCall = { type: "toolCall" as const, id: "call_1", name: "bash", arguments: { command } };
 				const message = { ...base, content: [toolCall], stopReason: "toolUse" as const };
 				stream.push({ type: "start", partial: message });
 				stream.push({ type: "toolcall_start", contentIndex: 0, partial: message });
