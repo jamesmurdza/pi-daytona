@@ -253,12 +253,12 @@ export default function (pi: ExtensionAPI) {
 	});
 
 	// Rewrite the agent's "current working directory" to the sandbox path.
+	// Match the whole line (not a literal host path) so this works regardless of
+	// what Pi used as the prompt cwd — avoids a silent no-op if they diverge.
 	pi.on("before_agent_start", (event) => {
 		if (!active) return;
-		const systemPrompt = event.systemPrompt.replace(
-			`Current working directory: ${localCwd}`,
-			`Current working directory: ${active.cwd} (inside Daytona sandbox ${shortId(active.sandbox.id)})`,
-		);
+		const replacement = `Current working directory: ${active.cwd} (inside Daytona sandbox ${shortId(active.sandbox.id)})`;
+		const systemPrompt = event.systemPrompt.replace(/Current working directory: .*/g, replacement);
 		return { systemPrompt };
 	});
 
